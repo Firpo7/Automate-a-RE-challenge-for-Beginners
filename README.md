@@ -1,6 +1,6 @@
-## Various approach to automate to a reversing challenge
+# Various approach to automate to a reversing challenge
 
-### **Introduction**
+## **Introduction**
 In this writeup I would introduce some ways to approach by scripting and automate, with different tools, a reverse engineer challenge.
 
 The target people are they who doesn't know much about automate a reversing challenge but knows something on reversing engineering in general, the scripts I will show in this file are only introductive
@@ -14,7 +14,7 @@ The tools I'm going to introduce are:
 - [R2pipe](https://github.com/radare/radare2-r2pipe)
 - [frida](https://www.frida.re/)
 
-### **Binary Analysis**
+## **Binary Analysis**
 First of all, try to run strings to see if we found something useful:
 ```
 $ strings ./wysiNwyg
@@ -77,7 +77,7 @@ The address where is the compare is ```0x0804872e```.
 
 What I want now is to build a script that breaks at ```0x0804872e```, picks the value of edx (and possibly xor it with 51) and set eax = edx so that it can pass the compare and continue the cycle.
 
-#### GDB
+### GDB
 To run a GDB script we need to write all the commands in a file and load it by running gdb with ```-x filename``` option, as you can see on the first line of the next code.
 
 Breakpoints can be set before the list of commands and if are needed here we can also set variables.
@@ -126,7 +126,7 @@ We got it!!!
 These two examples were only to introduce you to scripting, in fact if we use some extension to GDB this challenge could be easily solved.
 Below I will show my solutions using GDB-peda (with ```xormem```) and GDB-gef (with ```xor-memory```)
 
-##### GDB-peda
+#### GDB-peda
 When I have analyzed the entry4.fini function I skipped  the declaration of many variables, they were probably the encrypted password and congratulaton message, with the following scripts I try to decrypt them directly from the memory.
 
 Unfortunately for an unknown reason we couldn't put a number as key in any ways, so we have to append a char so that it didn't "think" it is a number...
@@ -150,7 +150,7 @@ end
 run
 ```
 
-##### GDB-gef
+#### GDB-gef
 The same script for GDB-gef is instead:
 ```
 source ~/gef/gef.py
@@ -173,7 +173,7 @@ For a cheatsheet of GDB-peda's commands see [here](https://github.com/stmerry/gd
 
 For a cheatsheet of GDB-gef's commands see [here](https://github.com/zxgio/gdb_gef-cheatsheet/blob/master/gdb_gef-cheatsheet.pdf).
 
-#### R2pipe
+### R2pipe
 R2pipe is a powerful tool because it integrates radare2 and python, so we can build more complex scripts.
 It creates a sort of 'pipe' with which send commands and receive the result.
 
