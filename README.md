@@ -78,17 +78,17 @@ If the program exits correctly from the cycle, the program flows inside another 
 But...do we want to do it by hand?
 
 ## **Time to script!**
-Before we saw how the program wants a password which has lenght 34 and were it seems to checks it. (EH??)
-The address where is the compare is ```0x0804872e```.
+Just to recap, the program asks for a password that is 34 char long.
+The address where the program performs the comparison char by char is ```0x0804872e```.
 
-What I want now is to build a script that breaks at ```0x0804872e```, picks the value of edx (and possibly xor it with 51) and set eax = edx so that it can pass the compare and continue the cycle.
+I want to code a script that breaks at ```0x0804872e```, picks the value of edx (and possibly xor it with 51) and set eax = edx, so that it can succesfullty pass the compare and let the program continue the cycle.
 
 ### GDB
-To run a GDB script we need to write all the commands in a file and load it by running gdb with ```-x filename``` option, as you can see on the first line of the next code.
+To run a GDB script we need to write all the commands in a file and load it by running gdb with ```-x filename``` option.
 
-Breakpoints can be set before the list of commands and if are needed here we can also set variables.
+Breakpoints can be set before the list of commands, and you can also set variables if you need them.
 
-A solution with GDB is the following:
+My solution to the challenge using GDB is the following:
 ```
 #gdb -silent -x ./gdbinit ./wysiNwyg    # command to run gdb using this script
 
@@ -97,15 +97,16 @@ commands                        # start list of the list of commands to do
 
 p/x $edx^51                     # print the hex value of edx^51
 set $eax = $edx                 # set eax = edx so that it can pass the compare
-continue                        # continue the execution, if it's all right it will hit the breakpoint 34 times
+continue                        # continue the execution, it will hit the breakpoint 34 times
 end                             # end of list of commands
 
 run                             # start the execution
 ```
 
-Remember to input a random string which has lenght >= 34, if it's shorter it will end before the compare, if it's longer no problem in fact the fgets will take only 35 chars.
+Remember to input a random string which has lenght >= 34: if it's shorter, it will end before the comparison.
+On the other hand, the fgets accept the first 35 char (with the \n), hence all the strings longer than the fixed bound will be truncated.
 
-The output this script will be the list of all values in edx:
+The output of this script isthe list of all values in edx:
 ```
 $1 = 0x2
 $2 = 0x5d
@@ -115,8 +116,9 @@ $33 = 0x12
 $34 = 0x12
 Congratulations! You just won :p
 ```
-Ok, we managed to win..but...the password?...we have two options either write a program that takes that values and reconstract the string or let gdb do that for us!
-So, instead of doing ```p/x $edx^51``` I opted to use the printf:
+Ok, we managed to win.. but... the password?
+We have two options: we write a program that takes that values and reconstract the string or we simply let gdb do the same for us!
+Instead of doing ```p/x $edx^51```, I opted to use the printf:
 
 ```printf "%c", ($edx^51)```
 
@@ -133,10 +135,11 @@ These two examples were only to introduce you to scripting, in fact if we use so
 Below I will show my solutions using GDB-peda (with ```xormem```) and GDB-gef (with ```xor-memory```)
 
 #### GDB-peda
-When I have analyzed the entry4.fini function I skipped  the declaration of many variables, they were probably the encrypted password and congratulaton message, with the following scripts I try to decrypt them directly from the memory.
+While I was analying the entry4.fini function, I skipped the declaration of many variables, as they were probably the encrypted password and congratulaton message.
+With the following scripts, I want to decrypt them directly from the memory.
 
-Unfortunately for an unknown reason we couldn't put a number as key in any ways, so we have to append a char so that it didn't "think" it is a number...
-So I decided to xor the chars in an even position and after those who are in odd one:
+Unfortunately, for an unknown reason, we can't put a number as key, so we have to append a char so that it didn't "think" it is a number...
+I decided to xor the chars in even positions, and then those who are in odd one:
 ```
 source ~/peda/peda.py
 
@@ -180,14 +183,15 @@ For a cheatsheet of GDB-peda's commands see [here](https://github.com/stmerry/gd
 For a cheatsheet of GDB-gef's commands see [here](https://github.com/zxgio/gdb_gef-cheatsheet/blob/master/gdb_gef-cheatsheet.pdf).
 
 ### R2pipe
-R2pipe is a powerful tool because it integrates radare2 and python, so we can build more complex scripts.
-It creates a sort of 'pipe' with which send commands and receive the result.
+R2pipe is a powerful tool that let you invoke radare2 commands using Python.
+It creates a 'pipe' that sends commands and receives the result.
 
-I used also rarun2 to redirect I/O to another terminal, an easy and useful guide on how to do is [here](https://reverseengineering.stackexchange.com/questions/16428/debugging-with-radare2-using-two-terminals).
+I used also rarun2 to redirect I/O to another terminal (an easy and useful guide on how to do is [here](https://reverseengineering.stackexchange.com/questions/16428/debugging-with-radare2-using-two-terminals)).
 
-In our R2pipe scripts we need first to load the binary with ```r2pipe.open()```, that takes as arguments the path to binary to load and the list of options with radare2 has to open the file. It will return an object "connected" with radare2.
+First, in our R2pipe scripts we need to load the binary with ```r2pipe.open()```: it takes as arguments the path to binary to load and the list of options for setttings up radare2. 
+The method returns an object "connected" with radare2.
 
-After that all the commands we want to send to radare2 has to be "sent" with the ```cmd``` method of the object or, if we want a result parsed in JSON, with ```cmdj```.
+All the commands we want to send to radare2 has to be invoked with the ```cmd``` method of the object or, if we want a result parsed in JSON, with ```cmdj```.
 
 The script I made for this presentation is the following:
 ```
@@ -210,7 +214,7 @@ for i in range(34):
   
 print s                                             # print us the password
 ```
-As before input a random string with lenght >= 34
+As said before, each random string with lenght >= 34 is ok.
 
 
 
@@ -218,4 +222,4 @@ As before input a random string with lenght >= 34
 
 
 
-Thanks to *@zangobot* to help me to write this file
+Thanks to *@zangobot* for helping me to write this file
