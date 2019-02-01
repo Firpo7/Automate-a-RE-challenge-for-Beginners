@@ -1,12 +1,13 @@
 # Various approach to automate to a reversing challenge
 
 ## **Introduction**
-In this writeup I would introduce some ways to approach by scripting and automate, with different tools, a reverse engineer challenge.
+In this writeup I will introduce different approaches to a simple reverse engineering challenge, using different tools, and by producing scripts to automate the process.
 
-The target people are they who doesn't know much about automate a reversing challenge but knows something on reversing engineering in general, the scripts I will show in this file are only introductive
+This tutorial is recommended for people that do not know much about automating a reversing challenge, but they know something on reversing engineering in general.
+The scripts I will show you, are only introductive.
 
-The challenge we are going to see was one of the practice challenges for Reply Cyber Security Challenge.
-The challenge name is ***wysiNwyg*** and I choose it because of it's "semplicity" to be scripted.
+The challenge I am going to describe is taken from the practice challenges of the Reply Cyber Security Challenge (magari un link?).
+The challenge name is ***wysiNwyg***, and I decided to use this one because it is quite easy to automate.
 
 The tools I'm going to introduce are:
 - [Cutter](https://github.com/radareorg/cutter) (for static analysis)
@@ -15,7 +16,7 @@ The tools I'm going to introduce are:
 - [frida](https://www.frida.re/) (alla fine non credo di trattarlo, al momento comunque non c'è)
 
 ## **Binary Analysis**
-First of all, try to run strings to see if we found something useful:
+First of all, we try to run strings to see if there is something readable and usefull inside the binary:
 ```
 $ strings ./wysiNwyg
 ...
@@ -35,26 +36,30 @@ Try again :(
 ...
 ```
 
-All right!! We just discover that there is a call to **ptrace** and it looks like that it doesn't want to be debugged.
-Now we can open ***Cutter*** and start to understand what it does.
+All right!! We just discover that there is a call to **ptrace**, and it looks like that the challenge doesn't want to be debugged.
+Now we can open ***Cutter*** and start to uncover what this binary does.
 
-One of the first things I noticed is that there are 4 ['init' and 'fini' functions](http://l4u-00.jinr.ru/usoft/WWW/www_debian.org/Documentation/elf/node3.html), two of them .init and the others two .fini, and the entry4.fini is much bigger than every other functions. But start in order by analyzing the first one and it seems that it doesn't do anything significant, so we can pass to entry2.init
+One of the first things we may notice is that there are 4 ['init' and 'fini' functions](http://l4u-00.jinr.ru/usoft/WWW/www_debian.org/Documentation/elf/node3.html),two of them (EH? non ho capito) .init and the others two .fini, and the entry4.fini is much bigger than every other functions. 
+The first one doesn't seem to do anything significant, so we start looking at entry2.init:
 
 ![entry2_img](images/entry2_img.png)
 
-OK! We found where the ptrace is called, now we can patch the binary using.. the power of Cutter 😎
+OK! We found where the ptrace is called, now we can patch the binary using... the power of Cutter 😎
 
 ![nop_ptrace](images/nop_ptrace.png)
 
 Now we can start to analyze the main function.
-It's easy to see that, after the welcome message and the 'Password: ' string, there ia *fgets* that takes at most **35** chars in input and stores them at ```0x8049d60```.
+It's easy to see that, after the welcome message and the 'Password: ' string, there is a *fgets* that takes at most **35** chars in input and stores them at ```0x8049d60```.
 
 ![img_fgets](images/img_fgets.png)
 
-To see better the flow of the function I decided to use **graph view**:
+To better understand the flow of the function I decided to use the **graph view**:
 ![graph_main](images/graph_main.png)
 
-It seems that the first thing it does is checks if the input is empty, and in that case jump directly to the end, otherwise it continues by removing the last char if is a '\n' and compare the string with "*s3cR3t_p4sSw0rD*", but this comparison was only a troll.. The last thing the program checks in the main is if the string has 34 lenght chars (0x22) and if not prints "*Try again :(*".
+It seems that the first thing it does is checking if the input is empty: in that case it jumps directly to the end. 
+Otherwise, it continues by removing the last char if is a '\n' and it compares the string with "*s3cR3t_p4sSw0rD*", but this comparison is only a troll.. 
+The last check contained inside the main functionis the length of the input string, which is 34 leng chars (0x22). 
+It prints prints "*Try again :(*" if the condition is not met.
 
 Good, now we know that the program wants a 34 lenght string, but which?
 Let's go to analyze the fini's functions.
