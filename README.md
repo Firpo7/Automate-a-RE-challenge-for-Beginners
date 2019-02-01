@@ -61,23 +61,24 @@ Otherwise, it continues by removing the last char if is a '\n' and it compares t
 The last check contained inside the main functionis the length of the input string, which is 34 leng chars (0x22). 
 It prints prints "*Try again :(*" if the condition is not met.
 
-Good, now we know that the program wants a 34 lenght string, but which?
-Let's go to analyze the fini's functions.
-I'll skip the entry3.fini function because it won't lead to nothing important.
+Good, now we know that the program wants a 34 length string, but which one?
+Let's analyze the other .fini functions.
+I'll skip the entry3.fini function because it won't lead to nothing important (but I suggest you to have a look at it and understand why it is not useful).
 
-entry4.fini instead is the function we are looking for. First, after a declaration of many variables that we skip at the moment, it checks again if strings has lenght 34 to go to start a cicle.
+On the contrary, entry4.fini is the function we are looking for. 
+First, after a declaration of many variables (that we skip at the moment), it checks again if the input string is 34 char length, and then it starts diving into a loop.
 Excellent! This is where we can find our answer!
-With graph view we can easely see that the cicle will end either the program has done 33 cicles or if miss a compare.
+With graph view we can easily see that the cicle will end either if the program has done 33 cicles or if it misses a comparison.
 
 ![snippet_while](images/snippet_while.png)
 
-Here the program take each char of our string, xor them with 51 (0x33) and compare them with another string.
-So what we need to do now then is put a breakpoint at the compare. take the value inside edx, xor it with 51 and finally reconstruct the password.
-If the program correctly end the cycle it goes in another while where I guess (because of the ```call sym.imp.putchar```) it will print a congratulation message.
+Here the program takes each char of our string, it applies the xor function  with thevalue 51 (0x33) and it compares them with another string.
+So what we need to do now is to add a breakpoint at the address of the compare, take the value inside edx, xor it with 51 and finally reconstruct the password.
+If the program exits correctly from the cycle, the program flows inside another while loop where I guess (because of the ```call sym.imp.putchar```) it will print a congratulation message.
 But...do we want to do it by hand?
 
 ## **Time to script!**
-Before we saw how the program wants a password which has lenght 34 and were it seems to checks it.
+Before we saw how the program wants a password which has lenght 34 and were it seems to checks it. (EH??)
 The address where is the compare is ```0x0804872e```.
 
 What I want now is to build a script that breaks at ```0x0804872e```, picks the value of edx (and possibly xor it with 51) and set eax = edx so that it can pass the compare and continue the cycle.
