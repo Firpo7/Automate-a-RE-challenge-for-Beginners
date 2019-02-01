@@ -38,9 +38,13 @@ Try again :(
 All right!! We just discover that there is a call to **ptrace**, and it looks like that the challenge doesn't want to be debugged.
 Now we can open ***Cutter*** and start to uncover what this binary does.
 
-One of the first things we may notice is that there are 4 ['init' and 'fini' functions](http://l4u-00.jinr.ru/usoft/WWW/www_debian.org/Documentation/elf/node3.html)
+One of the first things we may notice is that there are 2 .init and 2 .fini [functions](http://l4u-00.jinr.ru/usoft/WWW/www_debian.org/Documentation/elf/node3.html)
+
 ![entries_fun](images/entries_fun.png)
-two of them (EH? non ho capito) .init and the others two .fini, and the entry4.fini is much bigger than every other functions. 
+
+Another thing to notice is that the entry4.fini is much bigger than any other function.
+
+But let's start to see what they do.
 The first one doesn't seem to do anything significant, so we start looking at entry2.init:
 
 ![entry2_img](images/entry2_img.png)
