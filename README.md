@@ -12,7 +12,7 @@ The tools I'm going to introduce are:
 - [Cutter](https://github.com/radareorg/cutter) (for static analysis)
 - [gdb-peda](https://github.com/longld/peda)/[gdb-gef](https://github.com/hugsy/gef)
 - [R2pipe](https://github.com/radare/radare2-r2pipe)
-- [frida](https://www.frida.re/)
+- [frida](https://www.frida.re/) (alla fine non credo di trattarlo, al momento comunque non c'è)
 
 ## **Binary Analysis**
 First of all, try to run strings to see if we found something useful:
