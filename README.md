@@ -6,14 +6,13 @@ In this writeup I will introduce different approaches to a simple reverse engine
 This tutorial is recommended for people that do not know much about automating a reversing challenge, but they know something on reversing engineering in general.
 The scripts I will show you, are only introductive.
 
-The challenge I am going to describe is taken from the practice challenges of the Reply Cyber Security Challenge (magari un link?).
+The challenge I am going to describe is taken from the practice challenges of the [Reply Cyber Security Challenge](https://challenges.reply.com).
 The challenge name is ***wysiNwyg***, and I decided to use this one because it is quite easy to automate.
 
 The tools I'm going to introduce are:
 - [Cutter](https://github.com/radareorg/cutter) (for static analysis)
 - [gdb-peda](https://github.com/longld/peda)/[gdb-gef](https://github.com/hugsy/gef)
 - [R2pipe](https://github.com/radare/radare2-r2pipe)
-- [frida](https://www.frida.re/) (alla fine non credo di trattarlo, al momento comunque non c'è)
 
 ## **Binary Analysis**
 First of all, we try to run strings to see if there is something readable and usefull inside the binary:
@@ -39,7 +38,9 @@ Try again :(
 All right!! We just discover that there is a call to **ptrace**, and it looks like that the challenge doesn't want to be debugged.
 Now we can open ***Cutter*** and start to uncover what this binary does.
 
-One of the first things we may notice is that there are 4 ['init' and 'fini' functions](http://l4u-00.jinr.ru/usoft/WWW/www_debian.org/Documentation/elf/node3.html),two of them (EH? non ho capito) .init and the others two .fini, and the entry4.fini is much bigger than every other functions. 
+One of the first things we may notice is that there are 4 ['init' and 'fini' functions](http://l4u-00.jinr.ru/usoft/WWW/www_debian.org/Documentation/elf/node3.html)
+![entries_fun](images/entries_fun.png)
+two of them (EH? non ho capito) .init and the others two .fini, and the entry4.fini is much bigger than every other functions. 
 The first one doesn't seem to do anything significant, so we start looking at entry2.init:
 
 ![entry2_img](images/entry2_img.png)
@@ -58,7 +59,7 @@ To better understand the flow of the function I decided to use the **graph view*
 
 It seems that the first thing it does is checking if the input is empty: in that case it jumps directly to the end. 
 Otherwise, it continues by removing the last char if is a '\n' and it compares the string with "*s3cR3t_p4sSw0rD*", but this comparison is only a troll.. 
-The last check contained inside the main functionis the length of the input string, which is 34 leng chars (0x22). 
+The last check contained inside the main function is the length of the input string, which is 34 length chars (0x22). 
 It prints prints "*Try again :(*" if the condition is not met.
 
 Good, now we know that the program wants a 34 length string, but which one?
@@ -68,7 +69,7 @@ I'll skip the entry3.fini function because it won't lead to nothing important (b
 On the contrary, entry4.fini is the function we are looking for. 
 First, after a declaration of many variables (that we skip at the moment), it checks again if the input string is 34 char length, and then it starts diving into a loop.
 Excellent! This is where we can find our answer!
-With graph view we can easily see that the cicle will end either if the program has done 33 cicles or if it misses a comparison.
+With graph view we can easily see that the cicle will end either if the program has done 34 cicles (from 0 to 33, included) or if it misses a comparison.
 
 ![snippet_while](images/snippet_while.png)
 
@@ -81,7 +82,7 @@ But...do we want to do it by hand?
 Just to recap, the program asks for a password that is 34 char long.
 The address where the program performs the comparison char by char is ```0x0804872e```.
 
-I want to code a script that breaks at ```0x0804872e```, picks the value of edx (and possibly xor it with 51) and set eax = edx, so that it can succesfullty pass the compare and let the program continue the cycle.
+I want to code a script that breaks at ```0x0804872e```, picks the value of edx (and possibly xor it with 51) and set eax = edx, so that it can succesfully pass the compare and let the program continue the cycle.
 
 ### GDB
 To run a GDB script we need to write all the commands in a file and load it by running gdb with ```-x filename``` option.
@@ -188,7 +189,7 @@ It creates a 'pipe' that sends commands and receives the result.
 
 I used also rarun2 to redirect I/O to another terminal (an easy and useful guide on how to do is [here](https://reverseengineering.stackexchange.com/questions/16428/debugging-with-radare2-using-two-terminals)).
 
-First, in our R2pipe scripts we need to load the binary with ```r2pipe.open()```: it takes as arguments the path to binary to load and the list of options for setttings up radare2. 
+First, in our R2pipe scripts we need to load the binary with ```r2pipe.open()```: it takes as arguments the path to binary to load and the list of options for settings up radare2. 
 The method returns an object "connected" with radare2.
 
 All the commands we want to send to radare2 has to be invoked with the ```cmd``` method of the object or, if we want a result parsed in JSON, with ```cmdj```.
@@ -222,4 +223,4 @@ As said before, each random string with lenght >= 34 is ok.
 
 
 
-Thanks to *@zangobot* for helping me to write this file
+Thanks to [*@zangobot*](https://github.com/zangobot) for helping me to write this file
