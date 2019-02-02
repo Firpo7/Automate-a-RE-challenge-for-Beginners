@@ -11,6 +11,7 @@ The challenge name is ***wysiNwyg***, and I decided to use this one because it i
 
 The tools I'm going to introduce are:
 - [Cutter](https://github.com/radareorg/cutter) (for static analysis)
+- [gdb](https://www.gnu.org/software/gdb/)
 - [gdb-peda](https://github.com/longld/peda)/[gdb-gef](https://github.com/hugsy/gef)
 - [R2pipe](https://github.com/radare/radare2-r2pipe)
 
@@ -35,7 +36,7 @@ Try again :(
 ...
 ```
 
-All right!! We just discover that there is a call to **ptrace**, and it looks like that the challenge doesn't want to be debugged.
+All right!! We just discover that there is a call to **ptrace**, and it looks like that the challenge doesn't want to be debugged ([why using ptrace?](https://www.aldeid.com/wiki/Ptrace-anti-debugging)).
 Now we can open ***Cutter*** and start to uncover what this binary does.
 
 One of the first things we may notice is that there are 2 .init and 2 .fini [functions](http://l4u-00.jinr.ru/usoft/WWW/www_debian.org/Documentation/elf/node3.html)
