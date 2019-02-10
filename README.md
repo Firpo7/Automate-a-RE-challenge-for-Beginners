@@ -1,7 +1,7 @@
-# Various approaches to automate to a reversing challenge
+# Various approaches to automate a reversing challenge
 
 ## **Introduction**
-In this writeup I will introduce different approaches to a simple reverse engineering challenge, using different tools, and by producing scripts to automate the process.
+In this writeup I introduce different approaches to tackle a simple reverse engineering challenge, using different tools, and by producing scripts to automate the process.
 
 This tutorial is recommended for people that do not know much about automating a reversing challenge, but they know something about reversing engineering in general.
 The scripts I will show you, are only introductive.
@@ -16,7 +16,7 @@ The tools I'm going to introduce are:
 - [R2pipe](https://github.com/radare/radare2-r2pipe)
 
 ## **Binary Analysis**
-First of all, we try to run strings to see if there is something readable and useful inside the binary:
+First of all, we try to run ```strings``` to see if there is something readable and useful inside the binary:
 ```
 $ strings ./wysiNwyg
 ...
@@ -50,7 +50,7 @@ The first one doesn't seem to do anything significant, so we start looking at en
 
 ![entry2_img](images/entry2_img.png)
 
-OK! We found where the ptrace is called, now we can patch the binary using... the power of Cutter 😎
+OK! We found where ptrace is called, now we can patch the binary using... the power of Cutter 😎
 
 ![nop_ptrace](images/nop_ptrace.png)
 
@@ -59,27 +59,27 @@ It's easy to see that, after the welcome message and the 'Password: ' string, th
 
 ![img_fgets](images/img_fgets.png)
 
-To better understand the flow of the function I decided to use the **graph view**:
+To better understand the control flow of the function I decided to use the **graph view**:
 ![graph_main](images/graph_main.png)
 
 It seems that the first thing it does is checking if the input is empty: in that case, it jumps directly to the end. 
-Otherwise, it continues by removing the last char if is a '\n' and it compares the string with "*s3cR3t_p4sSw0rD*", but this comparison is only a troll.. 
+Otherwise, it continues by removing the last char if it is a '\n' and it compares the string with "*s3cR3t_p4sSw0rD*", but this comparison is only a troll.. 
 The last check contained inside the main function is the length of the input string, which is 34 length chars (0x22). 
 It prints "*Try again :(*" if the condition is not met.
 
-Good, now we know that the program wants a 34 length string, but which one?
+Good, now we know that the program wants a 34 char string, but which one?
 Let's analyze the other .fini functions.
 I'll skip the entry3.fini function because it won't lead to anything important (but I suggest you to have a look at it and understand why it is not useful).
 
 On the contrary, entry4.fini is the function we are looking for. 
-First, after a declaration of many variables (that we skip at the moment), it checks again if the input string is 34 char length, and then it starts diving into a loop.
+First, after a declaration of many variables (that we skip at the moment), it checks again if the input string is of length 34, and then it starts diving into a loop.
 Excellent! This is where we can find our answer!
 With graph view, we can easily see that the cycle will end either if the program has done 34 cycles (from 0 to 33, included) or if it misses a comparison.
 
 ![snippet_while](images/snippet_while.png)
 
 Here the program takes each char of our string, it applies the xor function with the value 51 (0x33) and it compares them with another string.
-So what we need to do now is to add a breakpoint at the address of the compare, take the value inside edx, xor it with 51 and finally reconstruct the password.
+So what we need to do now is to add a breakpoint at the address of the comparison, take the value inside edx, xor it with 51 and finally reconstruct the password.
 If the program exits correctly from the cycle, the program flows inside another while loop where I guess (because of the ```call sym.imp.putchar```) it will print a congratulation message.
 But...do we want to do it by hand?
 
